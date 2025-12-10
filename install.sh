@@ -86,15 +86,15 @@ cp -r ./* "$INSTALL_DIR/"
 # Create startup script
 cat > "$INSTALL_DIR/start-with-browser.sh" <<'EOFSTARTUP'
 #!/bin/bash
-# JunctionRelay VirtualDevice - Start with Chromium Browser
+# JunctionRelay VirtualDevice - Start with Firefox Browser
 
 INSTALL_DIR="/opt/junctionrelay-virtualdevice"
 WEBUI_URL="http://localhost:8086/"
 
 # Cleanup function
 cleanup() {
-    if [ -n "$CHROMIUM_PID" ]; then
-        kill $CHROMIUM_PID 2>/dev/null
+    if [ -n "$FIREFOX_PID" ]; then
+        kill $FIREFOX_PID 2>/dev/null
     fi
 }
 
@@ -113,15 +113,11 @@ for i in {1..60}; do
     sleep 0.5
 done
 
-# Open Chromium if DISPLAY is available
+# Open Firefox if DISPLAY is available
 if [ -n "$DISPLAY" ]; then
-    # Try chromium (Raspberry Pi OS) or chromium-browser (older versions)
-    if command -v chromium &> /dev/null; then
-        chromium --kiosk --noerrdialogs --disable-infobars --no-first-run --app="$WEBUI_URL" &
-        CHROMIUM_PID=$!
-    elif command -v chromium-browser &> /dev/null; then
-        chromium-browser --kiosk --noerrdialogs --disable-infobars --no-first-run --app="$WEBUI_URL" &
-        CHROMIUM_PID=$!
+    if command -v firefox &> /dev/null; then
+        firefox --kiosk "$WEBUI_URL" &
+        FIREFOX_PID=$!
     fi
 fi
 
@@ -147,6 +143,9 @@ Type=simple
 User=${ACTUAL_USER}
 Environment=DISPLAY=:0
 Environment=XAUTHORITY=/home/${ACTUAL_USER}/.Xauthority
+Environment=WAYLAND_DISPLAY=wayland-0
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=MOZ_ENABLE_WAYLAND=1
 WorkingDirectory=${INSTALL_DIR}
 ExecStart=/bin/bash ${INSTALL_DIR}/start-with-browser.sh
 Restart=on-failure
@@ -181,7 +180,7 @@ echo ""
 echo "Service status:"
 systemctl status ${SERVICE_NAME}.service --no-pager | head -n 10
 echo ""
-echo "Chromium will auto-open to WebUI on next graphical session"
+echo "Firefox will auto-open to WebUI on next graphical session"
 echo "Or access manually at: http://localhost:8086/"
 echo ""
 echo "Management commands:"

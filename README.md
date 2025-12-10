@@ -10,7 +10,7 @@ Flash standard Raspberry Pi OS (64-bit Desktop), then run:
 curl -fsSL https://raw.githubusercontent.com/catapultcase/JunctionRelay_VirtualDevice_Pi/main/install.sh | sudo bash
 ```
 
-That's it! JunctionRelay will auto-open Chromium to the WebUI on boot.
+That's it! JunctionRelay will auto-open Firefox to the WebUI on boot.
 
 ## What This Does
 
@@ -18,7 +18,7 @@ That's it! JunctionRelay will auto-open Chromium to the WebUI on boot.
 - Downloads latest JunctionRelay release
 - Installs to `/opt/junctionrelay-virtualdevice`
 - Creates systemd service (auto-starts on boot)
-- Auto-opens Chromium to WebUI on graphical session
+- Auto-opens Firefox to WebUI on graphical session
 - Works with any username you choose in Pi Imager
 
 ## Requirements

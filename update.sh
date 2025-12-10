@@ -105,3 +105,6 @@ systemctl status ${SERVICE_NAME}.service --no-pager | head -n 10
 echo ""
 echo "Backup saved to: $BACKUP_DIR"
 echo ""
+echo "The system will now reboot..."
+sleep 3
+reboot

@@ -191,3 +191,6 @@ echo "  sudo systemctl stop $SERVICE_NAME        # Stop service"
 echo "  sudo journalctl -u $SERVICE_NAME -f      # View logs"
 echo "  sudo ${INSTALL_DIR}/scripts/uninstall.sh  # Uninstall"
 echo ""
+echo "The system will now reboot..."
+sleep 3
+reboot

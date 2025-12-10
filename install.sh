@@ -139,7 +139,7 @@ echo "[6/6] Setting up systemd service..."
 cat > /etc/systemd/system/${SERVICE_NAME}.service <<EOFSERVICE
 [Unit]
 Description=JunctionRelay VirtualDevice
-After=graphical.target network-online.target
+After=network-online.target
 Wants=network-online.target
 
 [Service]
@@ -158,7 +158,7 @@ KillSignal=SIGTERM
 TimeoutStopSec=30
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=graphical.target
 EOFSERVICE
 
 systemctl daemon-reload

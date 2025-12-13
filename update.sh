@@ -84,6 +84,10 @@ else
 fi
 chown -R ${ACTUAL_USER}:${ACTUAL_USER} "$INSTALL_DIR"
 
+echo "  Rebuilding native modules for ARM64..."
+cd "$INSTALL_DIR"
+npm rebuild 2>&1 | grep -E "rebuilt|error" || echo "  ✓ Native modules rebuilt"
+
 echo "  Starting service..."
 systemctl start ${SERVICE_NAME}.service
 

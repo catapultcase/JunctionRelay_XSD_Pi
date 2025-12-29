@@ -1,15 +1,15 @@
 #!/bin/bash
-# JunctionRelay VirtualDevice - One-Command Installer for Raspberry Pi
+# JunctionRelay XSD - One-Command Installer for Raspberry Pi
 
 set -e
 
 REPO="catapultcase/JunctionRelay_VirtualDevice_Pi"
-INSTALL_DIR="/opt/junctionrelay-virtualdevice"
+INSTALL_DIR="/opt/junctionrelay-xsd"
 SERVICE_NAME="junctionrelay"
 MIN_NODE_VERSION=20
 
 echo "============================================================================"
-echo "  JunctionRelay VirtualDevice Installer"
+echo "  JunctionRelay XSD Installer"
 echo "============================================================================"
 echo ""
 
@@ -92,9 +92,9 @@ fi
 # Create startup script
 cat > "$INSTALL_DIR/start-with-browser.sh" <<'EOFSTARTUP'
 #!/bin/bash
-# JunctionRelay VirtualDevice - Start with Firefox Browser
+# JunctionRelay XSD - Start with Firefox Browser
 
-INSTALL_DIR="/opt/junctionrelay-virtualdevice"
+INSTALL_DIR="/opt/junctionrelay-xsd"
 WEBUI_URL="http://localhost:8086/"
 
 # Cleanup function
@@ -140,7 +140,7 @@ echo ""
 echo "[6/6] Setting up systemd service..."
 cat > /etc/systemd/system/${SERVICE_NAME}.service <<EOFSERVICE
 [Unit]
-Description=JunctionRelay VirtualDevice
+Description=JunctionRelay XSD
 After=network-online.target
 Wants=network-online.target
 

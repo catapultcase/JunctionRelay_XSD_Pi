@@ -1,6 +1,6 @@
-# JunctionRelay VirtualDevice - Raspberry Pi
+# JunctionRelay XSD - Raspberry Pi
 
-One-command installer for JunctionRelay VirtualDevice on Raspberry Pi.
+One-command installer for JunctionRelay XSD on Raspberry Pi.
 
 ## Quick Install
 
@@ -16,7 +16,7 @@ That's it! JunctionRelay will auto-open Firefox to the WebUI on boot.
 
 - Installs Node.js 20+ (if needed)
 - Downloads latest JunctionRelay release
-- Installs to `/opt/junctionrelay-virtualdevice`
+- Installs to `/opt/junctionrelay-xsd`
 - Creates systemd service (auto-starts on boot)
 - Auto-opens Firefox to WebUI on graphical session
 - Works with any username you choose in Pi Imager
@@ -50,10 +50,10 @@ sudo systemctl restart junctionrelay
 sudo journalctl -u junctionrelay -f
 
 # Update to latest version
-sudo /opt/junctionrelay-virtualdevice/update.sh
+sudo /opt/junctionrelay-xsd/update.sh
 
 # Uninstall
-sudo /opt/junctionrelay-virtualdevice/scripts/uninstall.sh
+sudo /opt/junctionrelay-xsd/scripts/uninstall.sh
 ```
 
 ## Updating
@@ -61,7 +61,7 @@ sudo /opt/junctionrelay-virtualdevice/scripts/uninstall.sh
 Update with a single command:
 
 ```bash
-sudo /opt/junctionrelay-virtualdevice/update.sh
+sudo /opt/junctionrelay-xsd/update.sh
 ```
 
 The updater will:

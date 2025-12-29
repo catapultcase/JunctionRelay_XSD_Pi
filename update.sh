@@ -1,14 +1,14 @@
 #!/bin/bash
-# JunctionRelay VirtualDevice - Update Script
+# JunctionRelay XSD - Update Script
 
 set -e
 
 REPO="catapultcase/JunctionRelay_VirtualDevice_Pi"
-INSTALL_DIR="/opt/junctionrelay-virtualdevice"
+INSTALL_DIR="/opt/junctionrelay-xsd"
 SERVICE_NAME="junctionrelay"
 
 echo "============================================================================"
-echo "  JunctionRelay VirtualDevice Updater"
+echo "  JunctionRelay XSD Updater"
 echo "============================================================================"
 echo ""
 

@@ -3,7 +3,7 @@
 
 set -e
 
-REPO="catapultcase/JunctionRelay_VirtualDevice_Pi"
+REPO="catapultcase/JunctionRelay_XSD_Pi"
 INSTALL_DIR="/opt/junctionrelay-xsd"
 SERVICE_NAME="junctionrelay"
 
@@ -20,7 +20,7 @@ fi
 if [ ! -d "$INSTALL_DIR" ]; then
     echo "ERROR: JunctionRelay is not installed at $INSTALL_DIR"
     echo "Please run the installer first:"
-    echo "  curl -fsSL https://raw.githubusercontent.com/catapultcase/JunctionRelay_VirtualDevice_Pi/main/install.sh | sudo bash"
+    echo "  curl -fsSL https://raw.githubusercontent.com/catapultcase/JunctionRelay_XSD_Pi/main/install.sh | sudo bash"
     exit 1
 fi
 

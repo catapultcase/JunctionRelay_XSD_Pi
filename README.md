@@ -7,7 +7,7 @@ One-command installer for JunctionRelay XSD on Raspberry Pi.
 Flash standard Raspberry Pi OS (64-bit Desktop), then run:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/catapultcase/JunctionRelay_XSD_Pi/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/catapultcase/JunctionRelay_VirtualDevice_Pi/main/install.sh | sudo bash
 ```
 
 That's it! JunctionRelay will auto-open Firefox to the WebUI on boot.
@@ -108,5 +108,5 @@ sudo netstat -tlnp | grep 8086
 
 ## Support
 
-- **Issues:** [GitHub Issues](https://github.com/catapultcase/JunctionRelay_XSD_Pi/issues)
+- **Issues:** [GitHub Issues](https://github.com/catapultcase/JunctionRelay_VirtualDevice_Pi/issues)
 - **Website:** [junctionrelay.com](https://junctionrelay.com)

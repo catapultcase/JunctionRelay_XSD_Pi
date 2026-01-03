@@ -3,7 +3,7 @@
 
 set -e
 
-REPO="catapultcase/JunctionRelay_VirtualDevice_Pi"
+REPO="catapultcase/JunctionRelay_XSD_Pi"
 INSTALL_DIR="/opt/junctionrelay-xsd"
 SERVICE_NAME="junctionrelay"
 MIN_NODE_VERSION=20

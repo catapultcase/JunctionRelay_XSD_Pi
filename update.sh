@@ -1,11 +1,13 @@
 #!/bin/bash
 # JunctionRelay XSD - Update Script
+# Node.js is bundled - no system Node.js required!
 
 set -e
 
 REPO="catapultcase/JunctionRelay_XSD_Pi"
 INSTALL_DIR="/opt/junctionrelay-xsd"
 SERVICE_NAME="junctionrelay"
+BUNDLED_NODE="$INSTALL_DIR/resources/binaries/node/bin/node"
 
 echo "============================================================================"
 echo "  JunctionRelay XSD Updater"
@@ -77,6 +79,9 @@ echo "  Backup saved to: $BACKUP_DIR"
 echo "  Installing new version..."
 cp -r ./* "$INSTALL_DIR/"
 
+# Make bundled Node.js executable
+chmod +x "$BUNDLED_NODE"
+
 if [ -n "$SUDO_USER" ]; then
     ACTUAL_USER="$SUDO_USER"
 else
@@ -84,9 +89,7 @@ else
 fi
 chown -R ${ACTUAL_USER}:${ACTUAL_USER} "$INSTALL_DIR"
 
-echo "  Rebuilding native modules for ARM64..."
-cd "$INSTALL_DIR"
-npm rebuild 2>&1 | grep -E "rebuilt|error" || echo "  ✓ Native modules rebuilt"
+echo "  ✓ Native modules pre-built for ARM64"
 
 echo "  Starting service..."
 systemctl start ${SERVICE_NAME}.service

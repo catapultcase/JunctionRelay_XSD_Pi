@@ -1,12 +1,13 @@
 #!/bin/bash
 # JunctionRelay XSD - One-Command Installer for Raspberry Pi
+# Node.js is bundled - no system Node.js required!
 
 set -e
 
 REPO="catapultcase/JunctionRelay_XSD_Pi"
 INSTALL_DIR="/opt/junctionrelay-xsd"
 SERVICE_NAME="junctionrelay"
-MIN_NODE_VERSION=20
+BUNDLED_NODE="$INSTALL_DIR/resources/binaries/node/bin/node"
 
 echo "============================================================================"
 echo "  JunctionRelay XSD Installer"
@@ -26,27 +27,10 @@ else
     ACTUAL_HOME=$(eval echo ~$ACTUAL_USER)
 fi
 
-echo "[1/6] Detected user: $ACTUAL_USER"
+echo "[1/5] Detected user: $ACTUAL_USER"
 echo ""
 
-echo "[2/6] Checking Node.js..."
-if ! command -v node &> /dev/null; then
-    echo "  Node.js not found. Installing Node.js ${MIN_NODE_VERSION}..."
-    curl -fsSL https://deb.nodesource.com/setup_${MIN_NODE_VERSION}.x | bash -
-    apt-get install -y nodejs
-else
-    NODE_VERSION=$(node -v | sed 's/v//' | cut -d. -f1)
-    if [ "$NODE_VERSION" -lt "$MIN_NODE_VERSION" ]; then
-        echo "  Node.js $NODE_VERSION found, but v${MIN_NODE_VERSION}+ required. Upgrading..."
-        curl -fsSL https://deb.nodesource.com/setup_${MIN_NODE_VERSION}.x | bash -
-        apt-get install -y nodejs
-    else
-        echo "  ✓ Node.js $(node -v) found"
-    fi
-fi
-echo ""
-
-echo "[3/6] Downloading latest release..."
+echo "[2/5] Downloading latest release..."
 LATEST_RELEASE=$(curl -s https://api.github.com/repos/$REPO/releases/latest)
 VERSION=$(echo "$LATEST_RELEASE" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 DOWNLOAD_URL=$(echo "$LATEST_RELEASE" | grep '"browser_download_url":' | grep '.tar.gz"' | sed -E 's/.*"([^"]+)".*/\1/')
@@ -65,14 +49,14 @@ curl -L -o package.tar.gz "$DOWNLOAD_URL"
 echo "  ✓ Download complete"
 echo ""
 
-echo "[4/6] Extracting..."
+echo "[3/5] Extracting..."
 tar -xzf package.tar.gz
 EXTRACTED_DIR=$(ls -d */ | head -n 1 | sed 's:/*$::')
 cd "$EXTRACTED_DIR"
 echo "  ✓ Extracted"
 echo ""
 
-echo "[5/6] Installing..."
+echo "[4/5] Installing..."
 if [ -d "$INSTALL_DIR" ]; then
     echo "  Existing installation found, backing up..."
     BACKUP_DIR="${INSTALL_DIR}.backup.$(date +%Y%m%d_%H%M%S)"
@@ -83,19 +67,23 @@ fi
 mkdir -p "$INSTALL_DIR"
 cp -r ./* "$INSTALL_DIR/"
 
+# Make bundled Node.js executable
+chmod +x "$BUNDLED_NODE"
+
 # Copy update.sh to root of install dir and make executable
 if [ -f "$INSTALL_DIR/scripts/update.sh" ]; then
     cp "$INSTALL_DIR/scripts/update.sh" "$INSTALL_DIR/update.sh"
     chmod +x "$INSTALL_DIR/update.sh"
 fi
 
-# Create startup script
+# Create startup script using bundled Node.js
 cat > "$INSTALL_DIR/start-with-browser.sh" <<'EOFSTARTUP'
 #!/bin/bash
 # JunctionRelay XSD - Start with Firefox Browser
 
 INSTALL_DIR="/opt/junctionrelay-xsd"
 WEBUI_URL="http://localhost:8086/"
+BUNDLED_NODE="$INSTALL_DIR/resources/binaries/node/bin/node"
 
 # Cleanup function
 cleanup() {
@@ -106,9 +94,9 @@ cleanup() {
 
 trap cleanup EXIT SIGTERM SIGINT
 
-# Start backend
+# Start backend using bundled Node.js
 cd "$INSTALL_DIR"
-node launcher.js &
+"$BUNDLED_NODE" launcher.js &
 LAUNCHER_PID=$!
 
 # Wait for backend to be ready (max 30 seconds)
@@ -137,7 +125,7 @@ chown -R ${ACTUAL_USER}:${ACTUAL_USER} "$INSTALL_DIR"
 echo "  ✓ Files installed"
 echo ""
 
-echo "[6/6] Setting up systemd service..."
+echo "[5/5] Setting up systemd service..."
 cat > /etc/systemd/system/${SERVICE_NAME}.service <<EOFSERVICE
 [Unit]
 Description=JunctionRelay XSD
@@ -182,6 +170,7 @@ echo ""
 echo "Version: $VERSION"
 echo "Install directory: $INSTALL_DIR"
 echo "Service: $SERVICE_NAME"
+echo "Node.js: Bundled (no system Node.js required)"
 echo ""
 echo "Service status:"
 systemctl status ${SERVICE_NAME}.service --no-pager | head -n 10

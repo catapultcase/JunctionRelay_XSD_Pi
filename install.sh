@@ -30,10 +30,10 @@ fi
 # Get user's UID for XDG_RUNTIME_DIR
 ACTUAL_UID=$(id -u "$ACTUAL_USER")
 
-echo "[1/5] Detected user: $ACTUAL_USER (UID: $ACTUAL_UID)"
+echo "[1/6] Detected user: $ACTUAL_USER (UID: $ACTUAL_UID)"
 echo ""
 
-echo "[2/5] Downloading latest release..."
+echo "[2/6] Downloading latest release..."
 LATEST_RELEASE=$(curl -s https://api.github.com/repos/$REPO/releases/latest)
 VERSION=$(echo "$LATEST_RELEASE" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 DOWNLOAD_URL=$(echo "$LATEST_RELEASE" | grep '"browser_download_url":' | grep '.AppImage"' | sed -E 's/.*"([^"]+)".*/\1/')
@@ -53,7 +53,7 @@ curl -L -o "$APPIMAGE_NAME" "$DOWNLOAD_URL"
 echo "  ✓ Download complete ($(du -h "$APPIMAGE_NAME" | cut -f1))"
 echo ""
 
-echo "[3/5] Installing..."
+echo "[3/6] Installing..."
 
 # Stop existing service if running
 if systemctl is-active --quiet ${SERVICE_NAME}.service 2>/dev/null; then
@@ -77,7 +77,56 @@ chown -R ${ACTUAL_USER}:${ACTUAL_USER} "$INSTALL_DIR"
 echo "  ✓ AppImage installed to $INSTALL_DIR"
 echo ""
 
-echo "[4/5] Setting up systemd service..."
+echo "[4/6] Creating startup script..."
+cat > "$INSTALL_DIR/start-with-browser.sh" <<'EOFSTARTUP'
+#!/bin/bash
+# JunctionRelay XSD - Start with Firefox Browser
+
+INSTALL_DIR="/opt/junctionrelay-xsd"
+WEBUI_URL="http://localhost:8086/"
+APPIMAGE_NAME="junctionrelay.AppImage"
+
+# Cleanup function
+cleanup() {
+    if [ -n "$FIREFOX_PID" ]; then
+        kill $FIREFOX_PID 2>/dev/null
+    fi
+}
+
+trap cleanup EXIT SIGTERM SIGINT
+
+# Start AppImage backend
+cd "$INSTALL_DIR"
+"./$APPIMAGE_NAME" --no-sandbox &
+APPIMAGE_PID=$!
+
+# Wait for backend to be ready (max 30 seconds)
+for i in {1..60}; do
+    if curl -s http://localhost:8086/api/health > /dev/null 2>&1; then
+        break
+    fi
+    sleep 0.5
+done
+
+# Open Firefox in kiosk mode if DISPLAY is available
+if [ -n "$DISPLAY" ]; then
+    if command -v firefox &> /dev/null; then
+        firefox --kiosk "$WEBUI_URL" &
+        FIREFOX_PID=$!
+    fi
+fi
+
+# Wait for AppImage process
+wait $APPIMAGE_PID
+exit $?
+EOFSTARTUP
+
+chmod +x "$INSTALL_DIR/start-with-browser.sh"
+chown ${ACTUAL_USER}:${ACTUAL_USER} "$INSTALL_DIR/start-with-browser.sh"
+echo "  ✓ Startup script created"
+echo ""
+
+echo "[5/6] Setting up systemd service..."
 cat > /etc/systemd/system/${SERVICE_NAME}.service <<EOFSERVICE
 [Unit]
 Description=JunctionRelay XSD
@@ -88,10 +137,12 @@ Wants=network-online.target
 Type=simple
 User=${ACTUAL_USER}
 Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/${ACTUAL_USER}/.Xauthority
 Environment=WAYLAND_DISPLAY=wayland-0
 Environment=XDG_RUNTIME_DIR=/run/user/${ACTUAL_UID}
+Environment=MOZ_ENABLE_WAYLAND=1
 WorkingDirectory=${INSTALL_DIR}
-ExecStart=${INSTALL_DIR}/${APPIMAGE_NAME} --no-sandbox
+ExecStart=/bin/bash ${INSTALL_DIR}/start-with-browser.sh
 Restart=on-failure
 RestartSec=10
 StandardOutput=journal
@@ -109,7 +160,7 @@ systemctl enable ${SERVICE_NAME}.service
 echo "  ✓ Service configured"
 echo ""
 
-echo "[5/5] Creating update script..."
+echo "[6/6] Creating update script..."
 cat > "$INSTALL_DIR/update.sh" <<'EOFUPDATE'
 #!/bin/bash
 # JunctionRelay XSD - Update Script
@@ -186,7 +237,8 @@ echo ""
 echo "Service status:"
 systemctl status ${SERVICE_NAME}.service --no-pager | head -n 10
 echo ""
-echo "WebUI: http://localhost:8086/"
+echo "Firefox will auto-open to WebUI on next graphical session"
+echo "Or access manually at: http://localhost:8086/"
 echo ""
 echo "Management commands:"
 echo "  sudo systemctl status $SERVICE_NAME      # Check status"

@@ -1,13 +1,13 @@
 #!/bin/bash
 # JunctionRelay XSD - Update Script
-# Node.js is bundled - no system Node.js required!
+# Electron AppImage - everything bundled!
 
 set -e
 
 REPO="catapultcase/JunctionRelay_XSD_Pi"
 INSTALL_DIR="/opt/junctionrelay-xsd"
 SERVICE_NAME="junctionrelay"
-BUNDLED_NODE="$INSTALL_DIR/resources/binaries/node/bin/node"
+APPIMAGE_NAME="junctionrelay.AppImage"
 
 echo "============================================================================"
 echo "  JunctionRelay XSD Updater"
@@ -26,92 +26,65 @@ if [ ! -d "$INSTALL_DIR" ]; then
     exit 1
 fi
 
-# Get current version
-CURRENT_VERSION="unknown"
-if [ -f "$INSTALL_DIR/package.json" ]; then
-    CURRENT_VERSION=$(grep '"version":' "$INSTALL_DIR/package.json" | sed -E 's/.*"([^"]+)".*/\1/')
-fi
-
-echo "[1/5] Current version: $CURRENT_VERSION"
-echo ""
-
-echo "[2/5] Checking for updates..."
+echo "[1/4] Checking for updates..."
 LATEST_RELEASE=$(curl -s https://api.github.com/repos/$REPO/releases/latest)
 LATEST_VERSION=$(echo "$LATEST_RELEASE" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-DOWNLOAD_URL=$(echo "$LATEST_RELEASE" | grep '"browser_download_url":' | grep '.tar.gz"' | sed -E 's/.*"([^"]+)".*/\1/')
+DOWNLOAD_URL=$(echo "$LATEST_RELEASE" | grep '"browser_download_url":' | grep '.AppImage"' | sed -E 's/.*"([^"]+)".*/\1/')
 
 if [ -z "$DOWNLOAD_URL" ]; then
     echo "  ERROR: Failed to get download URL from GitHub"
+    echo "  Make sure a release exists with an AppImage asset"
     exit 1
 fi
 
 echo "  Latest version: $LATEST_VERSION"
+echo ""
 
-if [ "$CURRENT_VERSION" = "$LATEST_VERSION" ]; then
-    echo "  ✓ Already up to date!"
-    exit 0
+echo "[2/4] Downloading..."
+TEMP_DIR=$(mktemp -d)
+curl -L -o "$TEMP_DIR/$APPIMAGE_NAME" "$DOWNLOAD_URL"
+echo "  ✓ Download complete ($(du -h "$TEMP_DIR/$APPIMAGE_NAME" | cut -f1))"
+echo ""
+
+echo "[3/4] Stopping service..."
+systemctl stop ${SERVICE_NAME}.service
+echo "  ✓ Service stopped"
+echo ""
+
+echo "[4/4] Installing update..."
+
+# Backup current AppImage
+if [ -f "$INSTALL_DIR/$APPIMAGE_NAME" ]; then
+    BACKUP_NAME="${APPIMAGE_NAME}.backup.$(date +%Y%m%d_%H%M%S)"
+    cp "$INSTALL_DIR/$APPIMAGE_NAME" "$INSTALL_DIR/$BACKUP_NAME"
+    echo "  Backup saved to: $INSTALL_DIR/$BACKUP_NAME"
 fi
 
-echo ""
-echo "[3/5] Downloading version $LATEST_VERSION..."
-TEMP_DIR=$(mktemp -d)
-cd "$TEMP_DIR"
-curl -L -o package.tar.gz "$DOWNLOAD_URL"
-echo "  ✓ Download complete"
-echo ""
-
-echo "[4/5] Extracting..."
-tar -xzf package.tar.gz
-EXTRACTED_DIR=$(ls -d */ | head -n 1 | sed 's:/*$::')
-cd "$EXTRACTED_DIR"
-echo "  ✓ Extracted"
-echo ""
-
-echo "[5/5] Updating installation..."
-echo "  Stopping service..."
-systemctl stop ${SERVICE_NAME}.service
-
-echo "  Backing up current installation..."
-BACKUP_DIR="${INSTALL_DIR}.backup.$(date +%Y%m%d_%H%M%S)"
-cp -r "$INSTALL_DIR" "$BACKUP_DIR"
-echo "  Backup saved to: $BACKUP_DIR"
-
-echo "  Installing new version..."
-cp -r ./* "$INSTALL_DIR/"
-
-# Make bundled Node.js executable
-chmod +x "$BUNDLED_NODE"
+# Install new AppImage
+cp "$TEMP_DIR/$APPIMAGE_NAME" "$INSTALL_DIR/"
+chmod +x "$INSTALL_DIR/$APPIMAGE_NAME"
 
 if [ -n "$SUDO_USER" ]; then
     ACTUAL_USER="$SUDO_USER"
 else
     ACTUAL_USER=$(stat -c '%U' "$INSTALL_DIR")
 fi
-chown -R ${ACTUAL_USER}:${ACTUAL_USER} "$INSTALL_DIR"
+chown ${ACTUAL_USER}:${ACTUAL_USER} "$INSTALL_DIR/$APPIMAGE_NAME"
 
-echo "  ✓ Native modules pre-built for ARM64"
-
-echo "  Starting service..."
+# Start service
 systemctl start ${SERVICE_NAME}.service
+echo "  ✓ Service started"
 
-cd /
+# Cleanup
 rm -rf "$TEMP_DIR"
 
-echo "  ✓ Update complete"
 echo ""
-
 echo "============================================================================"
-echo "  Update Successful!"
+echo "  Update Complete!"
 echo "============================================================================"
 echo ""
-echo "Updated from: $CURRENT_VERSION"
-echo "Updated to:   $LATEST_VERSION"
+echo "Version: $LATEST_VERSION"
 echo ""
 echo "Service status:"
 systemctl status ${SERVICE_NAME}.service --no-pager | head -n 10
 echo ""
-echo "Backup saved to: $BACKUP_DIR"
-echo ""
-echo "The system will now reboot..."
-sleep 3
-reboot

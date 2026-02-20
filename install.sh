@@ -141,6 +141,7 @@ Environment=XAUTHORITY=/home/${ACTUAL_USER}/.Xauthority
 Environment=WAYLAND_DISPLAY=wayland-0
 Environment=XDG_RUNTIME_DIR=/run/user/${ACTUAL_UID}
 Environment=MOZ_ENABLE_WAYLAND=1
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/${ACTUAL_UID}/bus
 WorkingDirectory=${INSTALL_DIR}
 ExecStart=/bin/bash ${INSTALL_DIR}/start-with-browser.sh
 Restart=on-failure
